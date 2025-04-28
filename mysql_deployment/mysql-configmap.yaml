@@ -10,8 +10,29 @@ data:
   primary.cnf: |
     # Apply this config only on the primary.
     [mysqld]
-    log-bin    
+    server-id=1
+    log-bin=mysql-bin
+    binlog_format=ROW
+    default_authentication_plugin=mysql_native_password
   replica.cnf: |
     # Apply this config only on replicas.
     [mysqld]
-    super-read-only   
+    super-read-only
+
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: mysql-configmap
+#   namespace: mysql-deployment
+#   labels:
+#     app: mysql
+#     app.kubernetes.io/name: mysql
+# data:
+#   primary.cnf: |
+#     # Apply this config only on the primary.
+#     [mysqld]
+#     log-bin    
+#   replica.cnf: |
+#     # Apply this config only on replicas.
+#     [mysqld]
+#     super-read-only   

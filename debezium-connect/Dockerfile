@@ -1,8 +1,7 @@
-FROM debezium/connect:2.7.1.Final
+FROM debezium/connect:2.7.3.Final
 
 ENV PLUGIN_DIR=/kafka/connect/plugins
 
-# Create the plugin directory if it doesn't exist
 RUN mkdir -p $PLUGIN_DIR
 
 # Download necessary JARs and place them in the plugin directory

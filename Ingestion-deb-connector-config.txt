@@ -1,5 +1,6 @@
 connector.class=io.debezium.connector.mysql.MySqlConnector
 database.user=root
+database.password=amans21601
 database.server.id=101
 tasks.max=1
 database.server.name=logicalDB

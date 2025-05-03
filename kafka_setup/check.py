@@ -1,30 +1,44 @@
-from confluent_kafka import Consumer, KafkaException, KafkaError
+from confluent_kafka import Consumer
+from confluent_kafka.schema_registry import SchemaRegistryClient
+from confluent_kafka.schema_registry.avro import AvroDeserializer
+from confluent_kafka.serialization import SerializationContext, MessageField
 
-conf = {
-    'bootstrap.servers': 'localhost:9092',
-    'group.id': 'my-group',
+# Kafka Consumer config
+consumer_conf = {
+    'bootstrap.servers': 'rnqtf-103-224-144-138.a.free.pinggy.link:44659',
+    'group.id': 'avro-consumer-group1',
     'auto.offset.reset': 'earliest'
 }
 
-consumer = Consumer(conf)
+# Schema Registry config
+schema_registry_conf = {
+    'url': 'https://rnfjh-103-224-144-138.a.free.pinggy.link/'  # change to your Schema Registry URL
+}
 
-def message_callback(msg):
-    print(f"Received message: {msg.value().decode('utf-8')}")
+# Initialize clients
+consumer = Consumer(consumer_conf)
+schema_registry_client = SchemaRegistryClient(schema_registry_conf)
 
-consumer.subscribe(['my-topic'])
+# Use generic AvroDeserializer (schema is auto-fetched from Schema Registry)
+avro_deserializer = AvroDeserializer(schema_registry_client)
 
+# Subscribe to topic
+consumer.subscribe(['topic_prefix.kafkaDB.users'])
+
+# Poll and decode messages
+print("Consuming Avro messages...")
 try:
     while True:
-        msg = consumer.poll(1.0)  # Wait for message (timeout 1 sec)
+        msg = consumer.poll(1.0)
         if msg is None:
             continue
-        elif msg.error():
-            if msg.error().code() == KafkaError._PARTITION_EOF:
-                print(f"End of partition reached {msg.topic()} [{msg.partition()}] at offset {msg.offset()}")
-            else:
-                raise KafkaException(msg.error())
-        else:
-            message_callback(msg)
+        if msg.error():
+            print("Consumer error: {}".format(msg.error()))
+            continue
+
+        # Deserialize Avro message
+        decoded_value = avro_deserializer(msg.value(), SerializationContext(msg.topic(), MessageField.VALUE))
+        print("Decoded message:", decoded_value)
 except KeyboardInterrupt:
     pass
 finally:

@@ -1,0 +1,59 @@
+version: '3.3'
+services:
+  # Kafdrop
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    restart: 'no'
+    environment:
+      KAFKA_BROKERCONNECT: broker:29092
+      SCHEMAREGISTRY_CONNECT: http://schema-registry:8081 
+    ports:
+      - 9000:9000
+    networks:
+      - kafka_setup_default  
+
+  # Debezium Connector
+  kconnect:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8083:8083
+    environment:
+      CONFIG_STORAGE_TOPIC: cdc_connect_configs
+      OFFSET_STORAGE_TOPIC: cdc_connect_offsets
+      STATUS_STORAGE_TOPIC: cdc_connect_status
+      BOOTSTRAP_SERVERS: broker:29092
+      KEY_CONVERTER: io.confluent.connect.avro.AvroConverter 
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081 
+      VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter 
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081 
+    networks:
+      - kafka_setup_default  
+
+  # Kafka Connect UI
+  kafka-connect-ui:
+    image: landoop/kafka-connect-ui
+    environment:
+      CONNECT_URL: http://kconnect:8083
+    ports:
+      - 8000:8000
+    depends_on:
+      - kconnect
+    networks:
+      - kafka_setup_default   
+
+  # Schema Registry
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.3.0
+    ports:
+      - 8081:8081
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: broker:29092
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+    networks:
+      - kafka_setup_default   
+
+networks:
+  kafka_setup_default:
+    external: true

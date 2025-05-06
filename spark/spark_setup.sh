@@ -25,18 +25,18 @@ fi
 echo "Docker is ready."
 
 # Set up Docker container with specified volumes, environment variables, and ports
-docker rm -f glue_jupyter_lab
+docker rm -f glue-spark
 docker run -itd  -e DISABLE_SSL=true --rm \
     -p 4040:4040 -p 18080:18080 -p 8998:8998 -p 8888:8888 \
     -v "$(pwd)/spark":/home/glue_user/workspace/jupyter_workspace \
     --network kafka_setup_default \
-    --name glue_jupyter_lab amaneazydiner/aws-glue-libs:glue_libs_4.0.0_image_01\
+    --name glue-spark amaneazydiner/aws-glue-libs:glue_libs_4.0.0_image_01\
     /home/glue_user/jupyter/jupyter_start.sh
 
 # Wait for the container to start
 sleep 3
 
-docker exec -it --user root glue_jupyter_lab /bin/bash -c "
+docker exec -it --user root glue-spark /bin/bash -c "
     yum install -y sudo passwd &&
     echo 'root:root' | sudo chpasswd &&
     echo 'glue_user:glue_user' | sudo chpasswd &&

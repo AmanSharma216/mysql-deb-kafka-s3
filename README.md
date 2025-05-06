@@ -25,12 +25,46 @@ This project sets up a real-time data streaming architecture using Kafka, Debezi
 
 ---
 
+## 📁 File Structure
+```
+├── debezium-connect/
+│   ├── docker-compose.yaml
+│   ├── Dockerfile
+│   └── Ingestion-deb-connector-config
+├── kafka_setup/
+│   └── docker-compose.yaml
+├── mysql_deployment/
+│   ├── mysql-secret.yaml
+│   ├── mysql-configmap.yaml
+│   ├── mysql-services.yaml
+│   └── mysql-statefulset.yaml
+├── playground/
+│   ├── data-injection-scripts/
+│   │   └── mysqlDummyDataInjector.py
+│   └── host-machine-kafka-tests-secret/
+│       ├── confluentDeserializer.py
+│       └── kafkaPythonDeserializer.py
+├── spark/
+│   ├── checkpoints/
+│   ├── data/
+│   ├── scripts/
+│   │   └── consumer.py
+│   ├── log4j.properties
+│   └── spark_setup.sh
+├── README.md
+├── .gitignore
+└── requirements.txt
+```
+
+---
+
+
 ## 🧱 Architecture Overview
 
 ```
 MySQL (binlog)
    │
-Debezium (Connector)
+Debezium (MySQL Connector)
    │
 Kafka (topic: topic_prefix.kafkaDB.users)
    │
@@ -46,129 +80,153 @@ Delta Lake (Storage or Sink)
 ### 1. Clone this repository
 
 ```bash
-git clone https://github.com/your-org/kafka-debezium-pipeline.git
-cd kafka-debezium-pipeline
-```
-
-### 2. Environment Configuration
-
-Create a `.env` file:
-
-```env
-EXTERNAL_HOST=your.public.hostname.com
-EXTERNAL_PORT=9091
-```
-
-These variables are used in your Kafka Docker Compose or Kubernetes ConfigMap.
-
----
-
-### 3. Start Kafka, Zookeeper, and Debezium with Docker Compose
-
-```bash
-docker-compose up -d
-```
-
-Ensure your `docker-compose.yml` file uses `${EXTERNAL_HOST}:${EXTERNAL_PORT}` like so:
-
-```yaml
-KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,EXTERNAL://${EXTERNAL_HOST}:${EXTERNAL_PORT}
+git clone https://github.com/AmanSharma216/mysql-deb-kafka-s3.git
+cd mysql-deb-kafka-s3
 ```
 
 ---
 
-### 4. Deploy MySQL and Debezium on Kubernetes
+### 2. Deploy MySQL
 
 Apply your Kubernetes manifests:
 
 ```bash
-kubectl apply -f k8s/mysql-deployment.yaml
-kubectl apply -f k8s/debezium-connector.yaml
+cd ~/mysql-deb-kafka-s3/mysql-deployment/
+minikube start --cni=bridge --driver=docker
+./run.sh
+kubectl get pods -n mysql-deployment
+kubectl port-forward pod/mysql-0 3307:3306 -n mysql-deployment
 ```
-
-Use ConfigMaps to inject environment variables for dynamic configuration.
+Forwarded the the pod to localhost:3307 \
+Use ConfigMaps to inject environment variables for dynamic configuration and passwords. \
+Default root password: amans
 
 ---
 
-### 5. Debezium Initial Snapshot
+### 3. Start Kafka Container
 
-Debezium performs an initial snapshot by reading all current rows in MySQL tables. This snapshot is emitted to Kafka topics before streaming binlog events.
-
-To enable snapshot:
-
-```json
-"snapshot.mode": "initial"
+```bash
+cd ~/mysql-deb-kafka-s3/kafka-setup/
+docker compose up --watch
 ```
-
-Debezium may emit `delete` events with `payload.after = null`.
 
 ---
 
-### 6. Spark Structured Streaming
+### 4. Start Debezium and KafkaConnect Container
 
-```python
-kafka_df = spark.readStream \
-    .format("kafka") \
-    .option("kafka.bootstrap.servers", "broker:29092") \
-    .option("subscribe", "topic_prefix.kafkaDB.users") \
-    .option("startingOffsets", "earliest") \
-    .option("group.id", "my-group") \
-    .load()
+```bash
+cd ~/mysql-deb-kafka-s3/debezium-connect/
+docker compose up --watch
+```
 
-kafka_df.writeStream \
-    .format("delta") \
-    .option("checkpointLocation", checkpoint_dir) \
-    .trigger(availableNow=True) \
-    .start(output_dir) \
-    .awaitTermination()
+---
+
+### 5. Check urls in browser:
+
+Kafdrop
+http://localhost:9000
+
+Kafka-connect-UI
+http://localhost:8000
+
+schema registry
+http://localhost:8081/subjects
+
+---
+
+### 6. Create dummy tables to mysql deployment
+
+```bash
+pip install -r requirements.txt
+python ~/mysql-deb-kafka-s3/playground/data-injection-scripts/mysqlDummyDataInjector.py
+```
+
+---
+
+
+### 7. Create Debezium MySQL Connector
+
+
+Visit the Debezium UI in your browser:
+
+```
+http://localhost:8000
+```
+
+> 🧭 Navigate to **Connectors → New Connector → MySQL Connector**.
+
+In the configuration section, paste debezium-connect/Ingestion-deb-connector-config.txt
+
+Click **Create**.
+
+---
+
+### 8. Check Kafka Topic via Kafdrop:
+
+
+
+Visit the Kafdrop UI in your browser:
+
+```
+http://localhost:9000
+```
+
+---
+
+### 9. Run PySpark Script for data ingestion
+
+Creating spark enviroment
+```bash
+cd ~/mysql-deb-kafka-s3/spark/
+./spark_setup.sh
+```
+Attach glue-spark container to VS Code window via Web Containers extension and open terminal
+
+```
+# Without Logging
+spark-submit \
+  --master local[*] \
+  --name "KafkaAvroConsumer" \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,org.apache.spark:spark-avro_2.12:3.3.0 \
+  --jars /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
+  --driver-class-path /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
+  /home/glue_user/workspace/jupyter_workspace/scripts/consumer.py
+
+# With Logging Enabled
+spark-submit \
+  --master local[*] \
+  --name "KafkaAvroConsumer" \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,org.apache.spark:spark-avro_2.12:3.3.0 \
+  --jars /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
+  --driver-class-path /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
+  --files /home/glue_user/workspace/jupyter_workspace/log4j.properties \
+  --conf "spark.driver.extraJavaOptions=-Dlog4j.configuration=file:/home/glue_user/workspace/jupyter_workspace/log4j.properties" \
+  /home/glue_user/workspace/jupyter_workspace/scripts/consumer.py
+
 ```
 
 ---
 
 ## ✅ Debugging Tips
 
-* Use `kcat` to verify Kafka messages:
+* Use `kcat` to verify Kafka messages inside host machine:
 
   ```bash
-  kcat -b ${EXTERNAL_HOST}:${EXTERNAL_PORT} -t topic_prefix.kafkaDB.users -C
-  ```
-
-* If you get API version issues, disable them:
-
-  ```bash
-  kcat -X api.version.request=false ...
+  kcat -b localhost:9092 -t cdc_connect_configs -C
   ```
 
 * Verify metadata with:
 
   ```bash
-  kcat -b ${EXTERNAL_HOST}:${EXTERNAL_PORT} -L
+  kcat -b localhost:9092 -t cdc_connect_configs -L
   ```
 
 ---
 
 ## 📋 Useful Notes
 
-* Kafka topics may require `api.version.request=false` due to version mismatches.
 * Use port tunneling with Serveo/Pinggy to expose Kafka externally.
 * Debezium sends tombstone messages (null payload) for deletes – handle these in Spark if necessary.
-
----
-
-## 📁 File Structure
-
-```
-.
-├── docker-compose.yml
-├── .env
-├── k8s/
-│   ├── mysql-deployment.yaml
-│   ├── debezium-connector.yaml
-│   ├── configmap.yaml
-├── spark/
-│   └── spark_streaming_job.py
-└── README.md
-```
 
 ---
 

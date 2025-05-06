@@ -5,14 +5,14 @@ from confluent_kafka.serialization import SerializationContext, MessageField
 
 # Kafka Consumer config
 consumer_conf = {
-    'bootstrap.servers': 'rnqtf-103-224-144-138.a.free.pinggy.link:44659',
-    'group.id': 'avro-consumer-group1',
+    'bootstrap.servers': 'localhost:9092',
+    'group.id': 'avro-consumer-group',
     'auto.offset.reset': 'earliest'
 }
-
+topic = "test.kafkaDB.customers"
 # Schema Registry config
 schema_registry_conf = {
-    'url': 'https://rnfjh-103-224-144-138.a.free.pinggy.link/'  # change to your Schema Registry URL
+    'url': 'http://localhost:8081/'  # change to your Schema Registry URL
 }
 
 # Initialize clients
@@ -23,7 +23,7 @@ schema_registry_client = SchemaRegistryClient(schema_registry_conf)
 avro_deserializer = AvroDeserializer(schema_registry_client)
 
 # Subscribe to topic
-consumer.subscribe(['topic_prefix.kafkaDB.users'])
+consumer.subscribe([topic])
 
 # Poll and decode messages
 print("Consuming Avro messages...")

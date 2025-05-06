@@ -4,8 +4,6 @@ ENV PLUGIN_DIR=/kafka/connect/plugins
 
 RUN mkdir -p $PLUGIN_DIR
 
-# Download necessary JARs and place them in the plugin directory
-# ref: https://debezium.io/documentation/reference/stable/configuration/avro.html#:~:text=A%20Debezium%20connector%20works%20in,Applies%20configured%20transformations.
 RUN curl -L -o $PLUGIN_DIR/kafka-connect-avro-converter.jar \
     https://packages.confluent.io/maven/io/confluent/kafka-connect-avro-converter/7.3.0/kafka-connect-avro-converter-7.3.0.jar && \
     curl -L -o $PLUGIN_DIR/kafka-connect-avro-data.jar \

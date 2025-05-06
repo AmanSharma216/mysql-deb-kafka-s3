@@ -6,7 +6,7 @@ services:
     restart: 'no'
     environment:
       KAFKA_BROKERCONNECT: broker:29092
-      SCHEMAREGISTRY_CONNECT: http://schema-registry:8081 #### add when add avro schema registry
+      SCHEMAREGISTRY_CONNECT: http://schema-registry:8081 
     ports:
       - 9000:9000
     networks:
@@ -24,10 +24,10 @@ services:
       OFFSET_STORAGE_TOPIC: cdc_connect_offsets
       STATUS_STORAGE_TOPIC: cdc_connect_status
       BOOTSTRAP_SERVERS: broker:29092
-      KEY_CONVERTER: io.confluent.connect.avro.AvroConverter #### add when add avro schema registry
-      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081 #### add when add avro schema registry
-      VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter #### add when add avro schema registry
-      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081 #### add when add avro schema registry
+      KEY_CONVERTER: io.confluent.connect.avro.AvroConverter 
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081 
+      VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter 
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081 
     networks:
       - kafka_setup_default  
 
@@ -35,7 +35,7 @@ services:
   kafka-connect-ui:
     image: landoop/kafka-connect-ui
     environment:
-      CONNECT_URL: http://kconnect:8083 # Pointing to the Kafka Connect REST API
+      CONNECT_URL: http://kconnect:8083
     ports:
       - 8000:8000
     depends_on:
@@ -43,7 +43,7 @@ services:
     networks:
       - kafka_setup_default   
 
-  # Schema Registry - add when add avro schema registry
+  # Schema Registry
   schema-registry:
     image: confluentinc/cp-schema-registry:7.3.0
     ports:

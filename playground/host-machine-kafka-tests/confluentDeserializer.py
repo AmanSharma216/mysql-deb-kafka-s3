@@ -5,7 +5,7 @@ import json
 from fastavro import schemaless_reader
 # Kafka server details
 bootstrap_servers = 'localhost:9092'  # Kafka server
-topic = 'topic_prefix.kafkaDB.users'  # Kafka topic name
+topic = 'test.kafkaDB.customers'  # Kafka topic name
 group_id = 'kpgroup4'  # Consumer group ID
 schema_registry_url = 'http://localhost:8081'  # Schema registry URL
 

@@ -2,6 +2,9 @@
 
 namespace="mysql-deployment"
 
+echo "Creating namespace: $namespace if it doesn't exist..."
+kubectl get namespace "$namespace" || kubectl create namespace "$namespace"
+
 echo "Deleting all resources in namespace: $namespace..."
 kubectl delete all --all -n "$namespace"
 

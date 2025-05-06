@@ -77,6 +77,35 @@ Delta Lake (Storage or Sink)
 
 ## 📦 Setup Instructions
 
+### 0. Installations for Linux
+Install docker and docker compose \
+https://support.netfoundry.io/hc/en-us/articles/360057865692-Installing-Docker-and-docker-compose-for-Ubuntu-20-04
+
+Install kubectl 
+```bash
+sudo apt-get update -y
+sudo apt-get install -y curl
+
+curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+rm kubectl
+
+kubectl version --client
+```
+
+Install minikube
+```bash
+sudo apt-get install -y conntrack
+
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+rm minikube-linux-amd64
+
+minikube version
+```
+
+----
+
 ### 1. Clone this repository
 
 ```bash

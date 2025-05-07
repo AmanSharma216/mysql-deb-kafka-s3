@@ -82,6 +82,8 @@ Install docker and docker compose \
 https://www.linuxtechi.com/how-to-install-docker-desktop-on-ubuntu/
 https://docs.docker.com/desktop/setup/install/linux/ubuntu/ \
 
+Note: Do modify the required resources for docker containers using docker desktop: memory to 8GB and cpu cores to 4
+
 Install kubectl 
 ```bash
 sudo apt-get update -y
@@ -168,7 +170,6 @@ http://localhost:8081/subjects
 ### 6. Create dummy tables to mysql deployment
 
 ```bash
-python ../playground/data-injection-scripts/mysqlDummyDataInjector.py \
 echo "customers,products,orders" | python ../playground/data-injection-scripts/mysqlDummyDataInjector.py
 
 ```
@@ -212,18 +213,40 @@ Creating spark enviroment
 cd ../spark/
 ./spark_setup.sh
 ```
+
+#### Ways to use Spark:
+1. Run this in host terminal:
+```
+# Without Logging
+docker exec -it glue-spark bash -c "
+/home/glue_user/spark/bin/spark-submit \
+  --master local[*] \
+  --name 'KafkaAvroConsumer' \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,org.apache.spark:spark-avro_2.12:3.3.0 \
+  --jars /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
+  --driver-class-path /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
+  /home/glue_user/workspace/jupyter_workspace/scripts/consumer.py"
+
+# Without Logging
+docker exec -it glue-spark bash -c "
+/home/glue_user/spark/bin/spark-submit \
+  --master local[*] \
+  --name 'KafkaAvroConsumer' \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,org.apache.spark:spark-avro_2.12:3.3.0 \
+  --files /home/glue_user/workspace/jupyter_workspace/log4j.properties \
+  --conf "spark.driver.extraJavaOptions=-Dlog4j.configuration=file:/home/glue_userworkspace/jupyter_workspace/log4j.properties" \
+  --jars /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
+  --driver-class-path /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
+  /home/glue_user/workspace/jupyter_workspace/scripts/consumer.py"
+
+```
+2. Using Dev Containers: \
 Add VS Code Extension: Dev Containers \
 Attach glue-spark container to VS Code window via Dev Containers extension and open terminal
 
 ```
 # Without Logging
-spark-submit \
-  --master local[*] \
-  --name "KafkaAvroConsumer" \
-  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,org.apache.spark:spark-avro_2.12:3.3.0 \
-  --jars /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
-  --driver-class-path /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
-  /home/glue_user/workspace/jupyter_workspace/scripts/consumer.py
+spark-submit --master local[*] --name "KafkaAvroConsumer" --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,org.apache.spark:spark-avro_2.12:3.3.0 --jars /home/glue_user/spark/jars/commons-pool2-2.11.1.jar --driver-class-path /home/glue_user/spark/jars/commons-pool2-2.11.1.jar /home/glue_user/workspace/jupyter_workspace/scripts/consumer.py
 
 # With Logging Enabled
 spark-submit \
@@ -233,7 +256,7 @@ spark-submit \
   --jars /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
   --driver-class-path /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
   --files /home/glue_user/workspace/jupyter_workspace/log4j.properties \
-  --conf "spark.driver.extraJavaOptions=-Dlog4j.configuration=file:/home/glue_user/workspace/jupyter_workspace/log4j.properties" \
+  --conf "spark.driver.extraJavaOptions=-Dlog4j.configuration=file:/home/glue_userworkspace/jupyter_workspace/log4j.properties" \
   /home/glue_user/workspace/jupyter_workspace/scripts/consumer.py
 
 ```

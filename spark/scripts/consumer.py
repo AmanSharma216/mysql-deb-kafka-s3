@@ -12,7 +12,7 @@ def get_schema_from_schema_registry(schema_registry_url, schema_registry_subject
 JOB_NAME = "INGESTION"
 kafka_url = "broker:29092"
 schema_registry_url = "http://schema-registry:8081/"
-kafka_producer_topic = "test.kafkaDB.orders"
+kafka_producer_topic = "test.kafkaDB.customers"
 schema_registry_subject = f"{kafka_producer_topic}-value"
 
 
@@ -27,7 +27,7 @@ wikimedia_df = spark \
 .option("kafka.bootstrap.servers", kafka_url)\
 .option("subscribe", kafka_producer_topic)\
 .option("startingOffsets", "earliest")\
-.option("failOnDataLoss", "false")\
+.option("failOnDataLoss", "true")\
 .load()
 
 
@@ -66,8 +66,8 @@ new_columns = (
 wikimedia_value_df = wikimedia_value_df.select(*new_columns)
 wikimedia_value_df = wikimedia_value_df.withColumn("processing_time", func.current_timestamp())
 
-checkpoint_dir = os.path.expanduser(f"~/workspace/jupyter_workspace/checkpoints/{JOB_NAME}/")
-output_dir = os.path.expanduser(f"~/workspace/jupyter_workspace/data/{JOB_NAME}/")
+checkpoint_dir = os.path.expanduser(f"home/glue_user/workspace/jupyter_workspace/checkpoints/{JOB_NAME}/")
+output_dir = os.path.expanduser(f"home/glue_user/workspace/jupyter_workspace/data/{JOB_NAME}/")
 
 
 
@@ -78,6 +78,9 @@ wikimedia_value_df.writeStream \
 .option("checkpointLocation", checkpoint_dir) \
 .start(output_dir) \
 .awaitTermination(10)
+
+spark.read.parquet(f"file:///{output_dir}").show()
+
 
 
 

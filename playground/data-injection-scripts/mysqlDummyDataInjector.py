@@ -6,7 +6,7 @@ import random
 host = 'localhost'
 database = 'kafkaDB'
 user = 'root'
-password = 'amans21601'
+password = 'amans'
 port = 3307
 
 fake = Faker()
@@ -41,6 +41,15 @@ def create_tables(connection):
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )
         """,
+        "products": """
+            CREATE TABLE IF NOT EXISTS products (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                price DECIMAL(10, 2),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )
+        """,
         "orders": """
             CREATE TABLE IF NOT EXISTS orders (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -54,15 +63,6 @@ def create_tables(connection):
                 FOREIGN KEY (product_id) REFERENCES products(id)
             )
         """,
-        "products": """
-            CREATE TABLE IF NOT EXISTS products (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                price DECIMAL(10, 2),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )
-        """
     }
 
     for table_name, create_table_sql in tables.items():

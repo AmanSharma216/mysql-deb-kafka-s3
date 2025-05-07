@@ -79,12 +79,15 @@ Delta Lake (Storage or Sink)
 
 ### 0. Installations for Linux
 Install docker and docker compose \
-https://support.netfoundry.io/hc/en-us/articles/360057865692-Installing-Docker-and-docker-compose-for-Ubuntu-20-04
+https://www.linuxtechi.com/how-to-install-docker-desktop-on-ubuntu/
+https://docs.docker.com/desktop/setup/install/linux/ubuntu/ \
 
 Install kubectl 
 ```bash
 sudo apt-get update -y
-sudo apt-get install -y curl
+sudo apt update && sudo apt-get install -y curl 
+sudo apt update && sudo apt install python3 python3-venv python3-pip
+
 
 curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
@@ -95,12 +98,7 @@ kubectl version --client
 
 Install minikube
 ```bash
-sudo apt-get install -y conntrack
-
-curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-sudo install minikube-linux-amd64 /usr/local/bin/minikube
-rm minikube-linux-amd64
-
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && sudo install minikube-linux-amd64 /usr/local/bin/minikube 
 minikube version
 ```
 
@@ -111,6 +109,9 @@ minikube version
 ```bash
 git clone https://github.com/AmanSharma216/mysql-deb-kafka-s3.git
 cd mysql-deb-kafka-s3
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ---
@@ -120,10 +121,11 @@ cd mysql-deb-kafka-s3
 Apply your Kubernetes manifests:
 
 ```bash
-cd ~/mysql-deb-kafka-s3/mysql-deployment/
+cd ../mysql-deployment/
 minikube start --cni=bridge --driver=docker
 ./run.sh
 kubectl get pods -n mysql-deployment
+kubectl exec -it mysql-0 -n mysql-deployment -- mysql -uroot -pamans -e "CREATE DATABASE kafkaDB;"
 kubectl port-forward pod/mysql-0 3307:3306 -n mysql-deployment
 ```
 Forwarded the the pod to localhost:3307 \
@@ -135,7 +137,7 @@ Default root password: amans
 ### 3. Start Kafka Container
 
 ```bash
-cd ~/mysql-deb-kafka-s3/kafka-setup/
+cd ../kafka-setup/
 docker compose up --watch
 ```
 
@@ -144,7 +146,7 @@ docker compose up --watch
 ### 4. Start Debezium and KafkaConnect Container
 
 ```bash
-cd ~/mysql-deb-kafka-s3/debezium-connect/
+cd ../debezium-connect/
 docker compose up --watch
 ```
 
@@ -166,8 +168,9 @@ http://localhost:8081/subjects
 ### 6. Create dummy tables to mysql deployment
 
 ```bash
-pip install -r requirements.txt
-python ~/mysql-deb-kafka-s3/playground/data-injection-scripts/mysqlDummyDataInjector.py
+python ../playground/data-injection-scripts/mysqlDummyDataInjector.py \
+echo "customers,products,orders" | python ../playground/data-injection-scripts/mysqlDummyDataInjector.py
+
 ```
 
 ---
@@ -206,10 +209,11 @@ http://localhost:9000
 
 Creating spark enviroment
 ```bash
-cd ~/mysql-deb-kafka-s3/spark/
+cd ../spark/
 ./spark_setup.sh
 ```
-Attach glue-spark container to VS Code window via Web Containers extension and open terminal
+Add VS Code Extension: Dev Containers \
+Attach glue-spark container to VS Code window via Dev Containers extension and open terminal
 
 ```
 # Without Logging

@@ -227,7 +227,7 @@ docker exec -it glue-spark bash -c "
   --driver-class-path /home/glue_user/spark/jars/commons-pool2-2.11.1.jar \
   /home/glue_user/workspace/jupyter_workspace/scripts/consumer.py"
 
-# Without Logging
+# With Logging
 docker exec -it glue-spark bash -c "
 /home/glue_user/spark/bin/spark-submit \
   --master local[*] \

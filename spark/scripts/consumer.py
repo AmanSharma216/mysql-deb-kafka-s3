@@ -66,8 +66,8 @@ new_columns = (
 wikimedia_value_df = wikimedia_value_df.select(*new_columns)
 wikimedia_value_df = wikimedia_value_df.withColumn("processing_time", func.current_timestamp())
 
-checkpoint_dir = os.path.expanduser(f"home/glue_user/workspace/jupyter_workspace/checkpoints/{JOB_NAME}/")
-output_dir = os.path.expanduser(f"home/glue_user/workspace/jupyter_workspace/data/{JOB_NAME}/")
+checkpoint_dir = os.path.expanduser(f"/home/glue_user/workspace/jupyter_workspace/checkpoints/{JOB_NAME}/")
+output_dir = os.path.expanduser(f"/home/glue_user/workspace/jupyter_workspace/data/{JOB_NAME}/")
 
 
 
